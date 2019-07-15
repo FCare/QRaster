@@ -12,6 +12,9 @@
 #include <GL/glew.h>
 #endif
 
+#define WIDTH 800
+#define HEIGHT 480
+
 #include <GLFW/glfw3.h>
 
 static GLFWwindow* g_window = NULL;
@@ -88,15 +91,38 @@ static void setKeyCallback() {
   glfwSetKeyCallback(g_window, key_callback);
 }
 
+static void swapBuffers(void) {
+   if( g_window == NULL ){
+      return;
+   }
+   glfwSwapBuffers(g_window);
+}
+
+static void initDrawVDP1() {
+  glDisable(GL_BLEND);
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_DITHER);
+
+  glViewport(0, 0, WIDTH, HEIGHT);
+  glClearColor(1.0, 1.0, 1.0, 1.0);
+}
+
+static void updateVDP1() {
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glClear(GL_COLOR_BUFFER_BIT);
+  swapBuffers();
+}
+
 int main(int argc, char *argv[]) {
 
-  setupOpenGL(600, 480);
-
+  setupOpenGL(WIDTH, HEIGHT);
+  initDrawVDP1();
   setKeyCallback();
 
   while (!shouldClose())
   {
        pollEvents();
+       updateVDP1();
   }
 
   releaseOpenGL();
