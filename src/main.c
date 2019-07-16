@@ -17,6 +17,8 @@
 
 #include <GLFW/glfw3.h>
 
+#include "vdp1_compute.h"
+
 static GLFWwindow* g_window = NULL;
 
 static void error_callback(int error, const char* description)
@@ -102,14 +104,14 @@ static void initDrawVDP1() {
   glDisable(GL_BLEND);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_DITHER);
-
   glViewport(0, 0, WIDTH, HEIGHT);
   glClearColor(1.0, 1.0, 1.0, 1.0);
+  vdp1_compute_init(WIDTH, HEIGHT);
 }
 
 static void updateVDP1() {
+  int tex = vdp1_compute();
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glClear(GL_COLOR_BUFFER_BIT);
   swapBuffers();
 }
 

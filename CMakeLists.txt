@@ -34,7 +34,18 @@ if (GLFW_FOUND)
   #set(QRASTER_HEADERS ${QRASTER_HEADERS} platform/glfw/platform.h
 endif (GLFW_FOUND)
 
-add_executable(QRaster ${QRASTER_SOURCES} ${QRASTER_HEADERS} src/main.c )
+set(QRASTER_SOURCES ${QRASTER_SOURCES}
+  src/main.c
+  src/vdp1_compute.c
+)
+
+set(QRASTER_HEADERS ${QRASTER_HEADERS}
+  src/vdp1_compute.h
+  src/vdp1_prog_compute.h
+  src/standard_compute.h
+)
+
+add_executable(QRaster ${QRASTER_SOURCES} ${QRASTER_HEADERS} )
 target_link_libraries(QRaster ${QRASTER_LIBRARIES})
 
 install(TARGETS QRaster DESTINATION "bin")
