@@ -8,5 +8,6 @@ enum
 };
 
 extern int vdp1_compute_init(int width, int height);
+extern int vdp1_compute();
 
 #endif //VDP1_COMPUTE_H

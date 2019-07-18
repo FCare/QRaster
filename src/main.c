@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #if defined(_USEGLEW_)
 #include <GL/glew.h>
@@ -18,8 +19,12 @@
 #include <GLFW/glfw3.h>
 
 #include "vdp1_compute.h"
+#include "standard_compute.h"
 
 static GLFWwindow* g_window = NULL;
+static int winprio_prg = -1;
+static GLuint vertexPosition_buf = 0;
+static GLuint vao = 0;
 
 static void error_callback(int error, const char* description)
 {
@@ -105,13 +110,112 @@ static void initDrawVDP1() {
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_DITHER);
   glViewport(0, 0, WIDTH, HEIGHT);
+  glGenBuffers(1, &vertexPosition_buf);
   glClearColor(1.0, 1.0, 1.0, 1.0);
+  glGenVertexArrays(1, &vao);
+  glBindVertexArray(vao);
   vdp1_compute_init(WIDTH, HEIGHT);
+
+}
+
+static int blitSimple(GLint tex) {
+
+  float const vertexPosition[] = {
+  (float)WIDTH/2.0f, -(float)HEIGHT/2.0f,
+  -(float)WIDTH/2.0f, -(float)HEIGHT/2.0f,
+  (float)WIDTH/2.0f, (float)HEIGHT/2.0f,
+  -(float)WIDTH/2.0f, (float)HEIGHT/2.0f };
+
+  const char winprio_v[] =
+    SHADER_VERSION
+    "layout (location = 0) in vec2 a_position;   \n"
+    "void main()       \n"
+    "{ \n"
+    " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
+    "} ";
+
+  const char winprio_f[] =
+    SHADER_VERSION
+    "#ifdef GL_ES\n"
+    "precision highp float; \n"
+    "#endif\n"
+    "uniform sampler2D s_texture;  \n"
+    "out vec4 fragColor; \n"
+    "void main()   \n"
+    "{  \n"
+    "  fragColor = texelFetch( s_texture, ivec2(gl_FragCoord.xy), 0 );         \n"
+    "}  \n";
+
+  const GLchar * fblit_winprio_v[] = { winprio_v, NULL };
+  const GLchar * fblit_winprio_f[] = { winprio_f, NULL };
+
+  if (winprio_prg == -1){
+    GLuint vshader;
+    GLuint fshader;
+    GLint compiled, linked;
+    if (winprio_prg != -1) glDeleteProgram(winprio_prg);
+    winprio_prg = glCreateProgram();
+    if (winprio_prg == 0){
+      return -1;
+    }
+
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vshader, 1, fblit_winprio_v, NULL);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      printf("Compile error in vertex shader.\n");
+      winprio_prg = -1;
+      return -1;
+    }
+
+    glShaderSource(fshader, 1, fblit_winprio_f, NULL);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      printf("Compile error in fragment shader.\n");
+      winprio_prg = -1;
+      abort();
+    }
+
+    glAttachShader(winprio_prg, vshader);
+    glAttachShader(winprio_prg, fshader);
+    glLinkProgram(winprio_prg);
+    glGetProgramiv(winprio_prg, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE) {
+      printf("Link error..\n");
+      winprio_prg = -1;
+      abort();
+    }
+
+    glUseProgram(winprio_prg);
+    glUniform1i(glGetUniformLocation(winprio_prg, "s_texture"), 0);
+  }
+  else{
+    glUseProgram(winprio_prg);
+  }
+
+  glDisable(GL_BLEND);
+
+  glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, vertexPosition_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, tex);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  return 0;
 }
 
 static void updateVDP1() {
   int tex = vdp1_compute();
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  blitSimple(tex);
   swapBuffers();
 }
 

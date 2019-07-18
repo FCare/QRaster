@@ -10,7 +10,7 @@ SHADER_VERSION_COMPUTE
 "#endif\n"
 "layout(local_size_x = 16, local_size_y = 16) in;\n"
 "layout(rgba8, binding = 0) writeonly highp uniform image2D outSurface;\n"
-"vec4 finalColor = vec4(0.0);\n"
+"vec4 finalColor = vec4(0.5);\n"
 "ivec2 texel = ivec2(0,0);\n"
 "void main()\n"
 "{\n"
