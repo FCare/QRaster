@@ -237,6 +237,7 @@ static int blitSimple(GLint tex) {
 }
 
 static void updateVDP1() {
+  vdp1add(WIDTH/16, 3*HEIGHT/16, WIDTH/2, 2*HEIGHT/16, 3*WIDTH/16, 3*HEIGHT/16, WIDTH/2, HEIGHT/16);
   int tex = vdp1_compute();
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   blitSimple(tex);

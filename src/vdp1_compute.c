@@ -12,6 +12,9 @@
 #define VDP1CPRINT
 #endif
 
+static int local_size_x = 8;
+static int local_size_y = 8;
+
 static int tex_width;
 static int tex_height;
 static int struct_size;
@@ -130,11 +133,41 @@ static int generateComputeBuffer(int w, int h) {
   return 0;
 }
 
+int vdp1add(int Ax, int Ay, int Bx, int By, int Cx, int Cy, int Dx, int Dy) {
+  int minx = (Ax < Bx)?Ax:Bx;
+  int miny = (Ay < By)?Ay:By;
+  int maxx = (Ax > Bx)?Ax:Bx;
+  int maxy = (Ay > By)?Ay:By;
+
+  minx = (minx < Cx)?minx:Cx;
+  minx = (minx < Dx)?minx:Dx;
+  miny = (miny < Cy)?miny:Cy;
+  miny = (miny < Dy)?miny:Dy;
+  maxx = (maxx > Cx)?maxx:Cx;
+  maxx = (maxx > Dx)?maxx:Dx;
+  maxy = (maxy > Cy)?maxy:Cy;
+  maxy = (maxy > Dy)?maxy:Dy;
+
+  printf("Bouding (%d,%d) (%d,%d) %d\n", minx, miny, maxx, maxy, local_size_y);
+
+  int intersectX = -1;
+  int intersectY = -1;
+  for (int i = 0; i<work_groups_x; i++) {
+    int blkx = i * local_size_x;
+    for (int j = 0; j<work_groups_y; j++) {
+      int blky = j*local_size_y;
+      if (!(blkx > maxx
+        || (blkx + local_size_x) < minx
+        || (blky + local_size_y) < miny
+        || blky > maxy)) {
+          nbCmd[i+j*work_groups_x]++;
+      }
+    }
+  }
+}
+
 int vdp1_compute_init(int width, int height)
 {
-  int local_size_x = 8;
-  int local_size_y = 8;
-
   int am = sizeof(cmdparameter_struct) % 16;
   tex_width = width;
   tex_height = height;
@@ -161,8 +194,6 @@ int vdp1_compute() {
 	ErrorHandle("glUseProgram");
 
 	VDP1CPRINT("Draw VDP1\n");
-  nbCmd[0] = 1;
-  nbCmd[work_groups_x/5 + work_groups_x * work_groups_y/3] = 1;
 
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_nbcmd_);
   glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int)*work_groups_x*work_groups_y, (void*)nbCmd);
@@ -181,6 +212,7 @@ int vdp1_compute() {
   glDispatchCompute(work_groups_x, work_groups_y, 1);
 	// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   ErrorHandle("glDispatchCompute");
+  memset(nbCmd, 0, work_groups_x*work_groups_y);
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
