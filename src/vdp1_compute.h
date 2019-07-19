@@ -7,6 +7,11 @@ enum
   NB_PRG
 };
 
+typedef struct
+{
+  unsigned int coord[4];
+} cmdparameter_struct;
+
 extern int vdp1_compute_init(int width, int height);
 extern int vdp1_compute();
 

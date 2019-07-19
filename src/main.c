@@ -16,6 +16,8 @@
 #define WIDTH 800
 #define HEIGHT 480
 
+#define __USE_OPENGL_DEBUG__
+
 #include <GLFW/glfw3.h>
 
 #include "vdp1_compute.h"
@@ -94,6 +96,21 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
+#if defined(__USE_OPENGL_DEBUG__)
+static void MessageCallback( GLenum source,
+                      GLenum type,
+                      GLuint id,
+                      GLenum severity,
+                      GLsizei length,
+                      const GLchar* message,
+                      const void* userParam )
+{
+  printf("GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+           ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
+            type, severity, message );
+}
+#endif
+
 static void setKeyCallback() {
   glfwSetKeyCallback(g_window, key_callback);
 }
@@ -106,6 +123,13 @@ static void swapBuffers(void) {
 }
 
 static void initDrawVDP1() {
+
+#if defined(__USE_OPENGL_DEBUG__)
+  // During init, enable debug output
+  glEnable              ( GL_DEBUG_OUTPUT );
+  glDebugMessageCallback( (GLDEBUGPROC) MessageCallback, 0 );
+#endif
+
   glDisable(GL_BLEND);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_DITHER);
