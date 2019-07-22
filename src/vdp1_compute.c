@@ -14,8 +14,8 @@
 
 #define NB_COARSE_RAST (NB_COARSE_RAST_X * NB_COARSE_RAST_Y)
 
-static int local_size_x = 8;
-static int local_size_y = 8;
+static int local_size_x = LOCAL_SIZE_X;
+static int local_size_y = LOCAL_SIZE_Y;
 
 static int tex_width;
 static int tex_height;
@@ -209,7 +209,6 @@ int vdp1_compute() {
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
   glUseProgram(prg_vdp1[progId]);
 
-
 	glBindTexture(GL_TEXTURE_2D, compute_tex);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex_width, tex_height, GL_BGRA, GL_UNSIGNED_BYTE, clear);
 
@@ -235,8 +234,7 @@ int vdp1_compute() {
   glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 	// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   ErrorHandle("glDispatchCompute");
-	//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BI
   memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 

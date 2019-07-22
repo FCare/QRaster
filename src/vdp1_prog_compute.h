@@ -6,16 +6,18 @@
 #define QuoteIdent(ident) #ident
 #define Stringify(macro) QuoteIdent(macro)
 
-#define NB_COARSE_RAST_X 16
-#define NB_COARSE_RAST_Y 16
+#define NB_COARSE_RAST_X 8
+#define NB_COARSE_RAST_Y 8
+
+#define LOCAL_SIZE_X 8
+#define LOCAL_SIZE_Y 8
 
 static const char vdp1_start_f[] =
 SHADER_VERSION_COMPUTE
 "#ifdef GL_ES\n"
 "precision highp float;\n"
 "#endif\n"
-"layout(local_size_x = 8, local_size_y = 8) in;\n"
-"layout(rgba8, binding = 0) writeonly highp uniform image2D outSurface;\n"
+
 "struct point{\n"
 "  int x;\n"
 "  int y;\n"
@@ -23,6 +25,9 @@ SHADER_VERSION_COMPUTE
 "struct cmdparameter_struct{ \n"
 "  int P[8];\n"
 "};\n"
+
+"layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
+"layout(rgba8, binding = 0) writeonly highp uniform image2D outSurface;\n"
 "layout(std430, binding = 1) readonly buffer NB_CMD { uint nbCmd[]; };\n"
 "layout(std430, binding = 2) readonly buffer CMD { \n"
 "  cmdparameter_struct cmd[];\n"
@@ -45,10 +50,10 @@ SHADER_VERSION_COMPUTE
 //      Input:   P = a point,
 //               V[] = vertex points of a polygon V[n+1] with V[n]=V[0]
 //      Return:  wn = the winding number (=0 only when P is outside)
-"int wn_PnPoly( ivec2 P, point V[5]){\n"
-"    int wn = 0;\n"    // the  winding number counter
+"uint wn_PnPoly( ivec2 P, point V[5]){\n"
+"    uint wn = 0;\n"    // the  winding number counter
      // loop through all edges of the polygon
-"    for (int i=0; i<5; i++) {\n"   // edge from V[i] to  V[i+1]
+"    for (int i=0; i<4; i++) {\n"   // edge from V[i] to  V[i+1]
 "        if (V[i].y <= P.y) {\n"          // start y <= P.y
 "            if (V[i+1].y  > P.y)\n"      // an upward crossing
 "                 if (isLeft( V[i], V[i+1], P) > 0)\n"  // P left of  edge
@@ -63,10 +68,10 @@ SHADER_VERSION_COMPUTE
 "    return wn;\n"
 "}\n"
 
-"int cn_PnPoly( ivec2 P, point V[5]){\n"
-"  int cn = 0;\n"    // the  crossing number counter
+"uint cn_PnPoly( ivec2 P, point V[5]){\n"
+"  uint cn = 0;\n"    // the  crossing number counter
     // loop through all edges of the polygon
-"    for (int i=0; i<5; i++) {\n"    // edge from V[i]  to V[i+1]
+"    for (int i=0; i<4; i++) {\n"    // edge from V[i]  to V[i+1]
 "       if (((V[i].y <= P.y) && (V[i+1].y > P.y))\n"     // an upward crossing
 "        || ((V[i].y > P.y) && (V[i+1].y <=  P.y))) {\n" // a downward crossing
             // compute  the actual edge-ray intersect x-coordinate
@@ -75,7 +80,8 @@ SHADER_VERSION_COMPUTE
 "                 ++cn;\n"   // a valid crossing of y=P.y right of P.x
 "        }\n"
 "    }\n"
-"    return (cn&1);\n"    // 0 if even (out), and 1 if  odd (in)
+"    if ((cn%2) == 1) return 1u;\n"    // 0 if even (out), and 1 if  odd (in)
+"    else return 0u;"
 "}\n"
 //===================================================================
 
@@ -91,8 +97,9 @@ SHADER_VERSION_COMPUTE
 "  Quad[3].y = cmd[idx].P[7];\n"
 "  Quad[4].x = Quad[0].x;\n"
 "  Quad[4].y = Quad[0].y;\n"
-//"  if (wn_PnPoly(P, Quad) != 0) return 1u;\n"
-"  if (cn_PnPoly(P, Quad) == 1) return 1u;\n"
+
+"  if (wn_PnPoly(P, Quad) != 0u) return 1u;\n"
+//"  if (cn_PnPoly(P, Quad) == 1u) return 1u;\n"
 "  else return 0u;\n"
 "}\n"
 
@@ -116,20 +123,16 @@ SHADER_VERSION_COMPUTE
 "  uint lindex = index.y*"Stringify(NB_COARSE_RAST_X)"+ index.x;\n"
 "  uint cmdIndex = lindex * 2000u;\n"
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
-"  if (nbCmd[lindex] == 0u) discarded = 2;\n"
-"  if (discarded == 0) {\n"
+"  if (nbCmd[lindex] == 0u) return;\n"
 "    int cmdindex = getCmd(texel, cmdIndex, 0u, nbCmd[lindex]);\n"
-"    if (cmdindex == -1) discarded = 1;\n";
+"    if (cmdindex == -1) return;\n";
 
 static const char vdp1_end_f[] =
-"  if (discarded == 1) finalColor = vec4(0.5);\n"
-"  if (discarded == 2) finalColor = vec4(0.2);\n"
 "  imageStore(outSurface,texel,finalColor);\n"
 "}\n";
 
 static const char vdp1_test_f[] =
 //"    else finalColor = vec4(float(cmd[cmdindex].P[1].x)/800.0, float(cmd[cmdindex].P[1].y)/480.0, 1.0, 1.0);\n"
-"    else finalColor = vec4(1.0);\n"
-"  }\n";
+"    finalColor = vec4(1.0);\n";
 
 #endif //VDP1_PROG_COMPUTE_H
