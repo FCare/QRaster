@@ -45,6 +45,8 @@ set(QRASTER_HEADERS ${QRASTER_HEADERS}
   src/standard_compute.h
 )
 
+set(QRASTER_LIBRARIES ${QRASTER_LIBRARIES} m)
+
 add_executable(QRaster ${QRASTER_SOURCES} ${QRASTER_HEADERS} )
 target_link_libraries(QRaster ${QRASTER_LIBRARIES})
 

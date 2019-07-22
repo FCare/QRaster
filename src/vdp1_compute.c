@@ -27,6 +27,8 @@ static int work_groups_y;
 static cmdparameter* cmdVdp1;
 static int* nbCmd;
 
+static int* clear;
+
 static GLuint compute_tex = 0;
 static GLuint ssbo_cmd_ = 0;
 static GLuint ssbo_nbcmd_ = 0;
@@ -187,6 +189,9 @@ int vdp1_compute_init(int width, int height)
     struct_size += 16 - am;
   }
 
+  clear = (int*)malloc(tex_height * tex_width * sizeof(int));
+	memset(clear, 0, tex_height * tex_width * sizeof(int));
+
   work_groups_x = (tex_width) / local_size_x;
   work_groups_y = (tex_height) / local_size_y;
 
@@ -203,6 +208,11 @@ int vdp1_compute() {
 	if (prg_vdp1[progId] == 0)
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
   glUseProgram(prg_vdp1[progId]);
+
+
+	glBindTexture(GL_TEXTURE_2D, compute_tex);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex_width, tex_height, GL_BGRA, GL_UNSIGNED_BYTE, clear);
+
 	ErrorHandle("glUseProgram");
 
 	VDP1CPRINT("Draw VDP1\n");
@@ -215,19 +225,18 @@ int vdp1_compute() {
 //  for (int i = 0; i < 1; i++) {
     if (nbCmd[i] != 0)
 		//printf("%d : %d %d %d\n", i, struct_size, struct_size*i, nbCmd[i]);
-    	glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i*2000,  nbCmd[i]*sizeof(cmdparameter), (void*)&cmdVdp1[2000*i]);
+    	glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i*2000, nbCmd[i]*sizeof(cmdparameter), (void*)&cmdVdp1[2000*i]);
   }
 
 	glBindImageTexture(0, compute_tex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_nbcmd_);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_cmd_);
 
-
   glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 	// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   ErrorHandle("glDispatchCompute");
 	//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-	//glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
   memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
