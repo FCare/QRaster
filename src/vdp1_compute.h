@@ -9,7 +9,7 @@ enum
 
 typedef struct
 {
-  unsigned int coord[8];
+  int P[8];
 } cmdparameter;
 
 extern int vdp1_compute_init(int width, int height);

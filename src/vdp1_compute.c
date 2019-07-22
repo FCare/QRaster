@@ -12,6 +12,8 @@
 #define VDP1CPRINT
 #endif
 
+#define NB_COARSE_RAST (NB_COARSE_RAST_X * NB_COARSE_RAST_Y)
+
 static int local_size_x = 8;
 static int local_size_y = 8;
 
@@ -22,7 +24,7 @@ static int struct_size;
 static int work_groups_x;
 static int work_groups_y;
 
-static cmdparameter** cmdVdp1;
+static cmdparameter* cmdVdp1;
 static int* nbCmd;
 
 static GLuint compute_tex = 0;
@@ -112,14 +114,14 @@ static int generateComputeBuffer(int w, int h) {
   }
   glGenBuffers(1, &ssbo_cmd_);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, struct_size*work_groups_x*work_groups_y, NULL, GL_DYNAMIC_DRAW);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, struct_size*2000*NB_COARSE_RAST, NULL, GL_DYNAMIC_DRAW);
 
   if (ssbo_nbcmd_ != 0) {
     glDeleteBuffers(1, &ssbo_nbcmd_);
   }
   glGenBuffers(1, &ssbo_nbcmd_);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_nbcmd_);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, work_groups_x*work_groups_y * sizeof(int),NULL,GL_DYNAMIC_DRAW);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, NB_COARSE_RAST * sizeof(int),NULL,GL_DYNAMIC_DRAW);
 
   glGenTextures(1, &compute_tex);
   glActiveTexture(GL_TEXTURE0);
@@ -134,14 +136,14 @@ static int generateComputeBuffer(int w, int h) {
 }
 
 int vdp1_add(cmdparameter* cmd) {
-	int Ax = cmd->coord[0];
-	int Ay = cmd->coord[1];
-	int Bx = cmd->coord[2];
-	int By = cmd->coord[3];
-	int Cx = cmd->coord[4];
-	int Cy = cmd->coord[5];
-	int Dx = cmd->coord[6];
-	int Dy = cmd->coord[7];
+	int Ax = cmd->P[0];
+	int Ay = cmd->P[1];
+	int Bx = cmd->P[2];
+	int By = cmd->P[3];
+	int Cx = cmd->P[4];
+	int Cy = cmd->P[5];
+	int Dx = cmd->P[6];
+	int Dy = cmd->P[7];
 
   int minx = (Ax < Bx)?Ax:Bx;
   int miny = (Ay < By)?Ay:By;
@@ -157,22 +159,18 @@ int vdp1_add(cmdparameter* cmd) {
   maxy = (maxy > Cy)?maxy:Cy;
   maxy = (maxy > Dy)?maxy:Dy;
 
-  printf("Bouding (%d,%d) (%d,%d) %d\n", minx, miny, maxx, maxy, local_size_y);
-
   int intersectX = -1;
   int intersectY = -1;
-  for (int i = 0; i<work_groups_x; i++) {
-    int blkx = i * local_size_x;
-    for (int j = 0; j<work_groups_y; j++) {
-      int blky = j*local_size_y;
+  for (int i = 0; i<NB_COARSE_RAST_X; i++) {
+    int blkx = i * (tex_width/NB_COARSE_RAST_X);
+    for (int j = 0; j<NB_COARSE_RAST_Y; j++) {
+      int blky = j*(tex_height/NB_COARSE_RAST_Y);
       if (!(blkx > maxx
-        || (blkx + local_size_x) < minx
-        || (blky + local_size_y) < miny
+        || (blkx + (tex_width/NB_COARSE_RAST_X)) < minx
+        || (blky + (tex_height/NB_COARSE_RAST_Y)) < miny
         || blky > maxy)) {
-					if (cmdVdp1[i+j*work_groups_x] == NULL)
-						cmdVdp1[i+j*work_groups_x] = (cmdparameter*) malloc(2000*sizeof(cmdparameter));
-					memcpy(&cmdVdp1[i+j*work_groups_x][nbCmd[i+j*work_groups_x]], cmd, sizeof(cmdparameter));
-          nbCmd[i+j*work_groups_x]++;
+					memcpy(&cmdVdp1[(i+j*NB_COARSE_RAST_X)*2000 + nbCmd[i+j*NB_COARSE_RAST_X]], cmd, sizeof(cmdparameter));
+          nbCmd[i+j*NB_COARSE_RAST_X]++;
       }
     }
   }
@@ -193,10 +191,10 @@ int vdp1_compute_init(int width, int height)
   work_groups_y = (tex_height) / local_size_y;
 
   generateComputeBuffer(width, height);
-  nbCmd = (int*)malloc(work_groups_x*work_groups_y*sizeof(int));
-  cmdVdp1 = (cmdparameter**)malloc(work_groups_x*work_groups_y*sizeof(cmdparameter*));
-  memset(nbCmd, 0, work_groups_x*work_groups_y);
-	memset(cmdVdp1, 0, work_groups_x*work_groups_y);
+  nbCmd = (int*)malloc(NB_COARSE_RAST *sizeof(int));
+  cmdVdp1 = (cmdparameter*)malloc(NB_COARSE_RAST*2000*sizeof(cmdparameter));
+  memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
+	memset(cmdVdp1, 0, NB_COARSE_RAST*2000*sizeof(cmdparameter*));
 }
 
 int vdp1_compute() {
@@ -210,12 +208,14 @@ int vdp1_compute() {
 	VDP1CPRINT("Draw VDP1\n");
 
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_nbcmd_);
-  glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int)*work_groups_x*work_groups_y, (void*)nbCmd);
+  glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int)*NB_COARSE_RAST, (void*)nbCmd);
 
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
-  for (int i = 0; i < work_groups_x*work_groups_y; i++) {
+  for (int i = 0; i < NB_COARSE_RAST; i++) {
 //  for (int i = 0; i < 1; i++) {
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i,  nbCmd[i]*sizeof(cmdparameter), (void*)&cmdVdp1[i]);
+    if (nbCmd[i] != 0)
+		//printf("%d : %d %d %d\n", i, struct_size, struct_size*i, nbCmd[i]);
+    	glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i*2000,  nbCmd[i]*sizeof(cmdparameter), (void*)&cmdVdp1[2000*i]);
   }
 
 	glBindImageTexture(0, compute_tex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
@@ -226,7 +226,9 @@ int vdp1_compute() {
   glDispatchCompute(work_groups_x, work_groups_y, 1);
 	// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   ErrorHandle("glDispatchCompute");
-  memset(nbCmd, 0, work_groups_x*work_groups_y);
+	//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	//glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+  memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
   return compute_tex;

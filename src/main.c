@@ -238,14 +238,14 @@ static int blitSimple(GLint tex) {
 
 static void generateScene() {
   cmdparameter *cmd = (cmdparameter*)malloc(sizeof(cmdparameter));
-  cmd->coord[0] = WIDTH/16;
-  cmd->coord[1] = 3*HEIGHT/16;
-  cmd->coord[2] = WIDTH/2;
-  cmd->coord[3] = 2*HEIGHT/16;
-  cmd->coord[4] = 3*WIDTH/16;
-  cmd->coord[5] = 3*HEIGHT/16;
-  cmd->coord[6] = WIDTH/2;
-  cmd->coord[7] = HEIGHT/16;
+  cmd->P[0] = WIDTH/16;
+  cmd->P[1] = 3*HEIGHT/16;
+  cmd->P[2] = WIDTH/2;
+  cmd->P[3] = 2*HEIGHT/16;
+  cmd->P[4] = 13*WIDTH/16;
+  cmd->P[5] = 3*HEIGHT/16;
+  cmd->P[6] = WIDTH/2;
+  cmd->P[7] = HEIGHT/16;
   vdp1_add(cmd);
 }
 
