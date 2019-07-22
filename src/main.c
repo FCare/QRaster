@@ -236,8 +236,21 @@ static int blitSimple(GLint tex) {
   return 0;
 }
 
+static void generateScene() {
+  cmdparameter *cmd = (cmdparameter*)malloc(sizeof(cmdparameter));
+  cmd->coord[0] = WIDTH/16;
+  cmd->coord[1] = 3*HEIGHT/16;
+  cmd->coord[2] = WIDTH/2;
+  cmd->coord[3] = 2*HEIGHT/16;
+  cmd->coord[4] = 3*WIDTH/16;
+  cmd->coord[5] = 3*HEIGHT/16;
+  cmd->coord[6] = WIDTH/2;
+  cmd->coord[7] = HEIGHT/16;
+  vdp1_add(cmd);
+}
+
 static void updateVDP1() {
-  vdp1add(WIDTH/16, 3*HEIGHT/16, WIDTH/2, 2*HEIGHT/16, 3*WIDTH/16, 3*HEIGHT/16, WIDTH/2, HEIGHT/16);
+  generateScene();
   int tex = vdp1_compute();
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   blitSimple(tex);

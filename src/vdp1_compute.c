@@ -22,7 +22,7 @@ static int struct_size;
 static int work_groups_x;
 static int work_groups_y;
 
-static cmdparameter_struct* cmdVdp1;
+static cmdparameter* cmdVdp1;
 static int* nbCmd;
 
 static GLuint compute_tex = 0;
@@ -133,7 +133,16 @@ static int generateComputeBuffer(int w, int h) {
   return 0;
 }
 
-int vdp1add(int Ax, int Ay, int Bx, int By, int Cx, int Cy, int Dx, int Dy) {
+int vdp1_add(cmdparameter* cmd) {
+	int Ax = cmd->coord[0];
+	int Ay = cmd->coord[1];
+	int Bx = cmd->coord[2];
+	int By = cmd->coord[3];
+	int Cx = cmd->coord[4];
+	int Cy = cmd->coord[5];
+	int Dx = cmd->coord[6];
+	int Dy = cmd->coord[7];
+
   int minx = (Ax < Bx)?Ax:Bx;
   int miny = (Ay < By)?Ay:By;
   int maxx = (Ax > Bx)?Ax:Bx;
@@ -168,10 +177,10 @@ int vdp1add(int Ax, int Ay, int Bx, int By, int Cx, int Cy, int Dx, int Dy) {
 
 int vdp1_compute_init(int width, int height)
 {
-  int am = sizeof(cmdparameter_struct) % 16;
+  int am = sizeof(cmdparameter) % 16;
   tex_width = width;
   tex_height = height;
-  struct_size = sizeof(cmdparameter_struct);
+  struct_size = sizeof(cmdparameter);
   if (am != 0) {
     struct_size += 16 - am;
   }
@@ -181,7 +190,7 @@ int vdp1_compute_init(int width, int height)
 
   generateComputeBuffer(width, height);
   nbCmd = (int*)malloc(work_groups_x*work_groups_y*sizeof(int));
-  cmdVdp1 = (cmdparameter_struct*)malloc(work_groups_x*work_groups_y*sizeof(cmdparameter_struct));
+  cmdVdp1 = (cmdparameter*)malloc(work_groups_x*work_groups_y*sizeof(cmdparameter));
   memset(nbCmd, 0, work_groups_x*work_groups_y);
 }
 
@@ -201,7 +210,7 @@ int vdp1_compute() {
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
   for (int i = 0; i < work_groups_x*work_groups_y; i++) {
 //  for (int i = 0; i < 1; i++) {
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i,  nbCmd[i]*sizeof(cmdparameter_struct), (void*)cmdVdp1);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i,  nbCmd[i]*sizeof(cmdparameter), (void*)cmdVdp1);
   }
 
 	glBindImageTexture(0, compute_tex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
