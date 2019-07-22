@@ -1,5 +1,6 @@
 #include "vdp1_compute.h"
 #include "vdp1_prog_compute.h"
+#include "sonic.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -31,6 +32,7 @@ static int* clear;
 
 static GLuint compute_tex = 0;
 static GLuint ssbo_cmd_ = 0;
+static GLuint ssbo_vram_ = 0;
 static GLuint ssbo_nbcmd_ = 0;
 static GLuint prg_vdp1[NB_PRG] = {0};
 
@@ -107,10 +109,24 @@ static GLuint createProgram(int count, const GLchar** prg_strs) {
   return program;
 }
 
+static char pixel[SONIC_WIDTH*SONIC_HEIGHT*4];
+
 static int generateComputeBuffer(int w, int h) {
   if (compute_tex != 0) {
     glDeleteTextures(1,&compute_tex);
   }
+	if (ssbo_vram_ != 0) {
+    glDeleteBuffers(1, &ssbo_vram_);
+	}
+  for (int i = 0; i< SONIC_WIDTH*SONIC_HEIGHT; i++) {
+	  HEADER_PIXEL(&header_data, &pixel[4*i]);
+	  pixel[4*i+3] = 0xFF;
+  }
+
+	glGenBuffers(1, &ssbo_vram_);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, SONIC_WIDTH*SONIC_HEIGHT*4, pixel, GL_STATIC_READ);
+
   if (ssbo_cmd_ != 0) {
     glDeleteBuffers(1, &ssbo_cmd_);
   }
@@ -230,6 +246,8 @@ int vdp1_compute() {
 	glBindImageTexture(0, compute_tex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_nbcmd_);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_cmd_);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_vram_);
+	glUniform1i(4, SONIC_WIDTH);
 
   glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 	// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);

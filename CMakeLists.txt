@@ -43,6 +43,7 @@ set(QRASTER_HEADERS ${QRASTER_HEADERS}
   src/vdp1_compute.h
   src/vdp1_prog_compute.h
   src/standard_compute.h
+  src/sonic.h
 )
 
 set(QRASTER_LIBRARIES ${QRASTER_LIBRARIES} m)

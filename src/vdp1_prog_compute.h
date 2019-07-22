@@ -32,7 +32,8 @@ SHADER_VERSION_COMPUTE
 "layout(std430, binding = 2) readonly buffer CMD { \n"
 "  cmdparameter_struct cmd[];\n"
 "};\n"
-
+"layout(std430, binding = 3) readonly buffer COLOR { uint color[]; };\n"
+"layout(location = 4) uniform int colWidth;\n"
 // from here http://geomalgorithms.com/a03-_inclusion.html
 // a Point is defined by its coordinates {int x, y;}
 //===================================================================
@@ -133,6 +134,11 @@ static const char vdp1_end_f[] =
 
 static const char vdp1_test_f[] =
 //"    else finalColor = vec4(float(cmd[cmdindex].P[1].x)/800.0, float(cmd[cmdindex].P[1].y)/480.0, 1.0, 1.0);\n"
-"    finalColor = vec4(1.0);\n";
+"    uint col = color[(texel.y * colWidth) + texel.x];"
+"    float a = float((col>>24u)&0xFFu)/255.0f;\n"
+"    float b = float((col>>16u)&0xFFu)/255.0f;\n"
+"    float g = float((col>>8u)&0xFFu)/255.0f;\n"
+"    float r = float((col>>0u)&0xFFu)/255.0f;\n"
+"    finalColor = vec4(r,g,b,a);\n";
 
 #endif //VDP1_PROG_COMPUTE_H
