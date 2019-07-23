@@ -65,23 +65,25 @@ SHADER_VERSION_COMPUTE
 "  }\n"
 "  return wn;\n"
 "}\n"
-
-"uint cn_PnPoly( ivec2 P, vec2 V[5]){\n"
-"  uint cn = 0;\n"    // the  crossing number counter
-    // loop through all edges of the polygon
-"    for (int i=0; i<4; i++) {\n"    // edge from V[i]  to V[i+1]
-"       if (((V[i].y <= P.y) && (V[i+1].y > P.y))\n"     // an upward crossing
-"        || ((V[i].y > P.y) && (V[i+1].y <=  P.y))) {\n" // a downward crossing
-            // compute  the actual edge-ray intersect x-coordinate
-"            float vt = float(P.y  - V[i].y) / (V[i+1].y - V[i].y);\n"
-"            if (P.x <  V[i].x + vt * (V[i+1].x - V[i].x))\n" // P.x < intersect
-"                 ++cn;\n"   // a valid crossing of y=P.y right of P.x
-"        }\n"
-"    }\n"
-"    if ((cn%2) == 1) return 1u;\n"    // 0 if even (out), and 1 if  odd (in)
-"    else return 0u;"
-"}\n"
 //===================================================================
+
+"vec2 dist( vec2 P,  vec2 P0, vec2 P1 )\n"
+// dist_Point_to_Segment(): get the distance of a point to a segment
+//     Input:  a Point P and a Segment S (P0, P1) (in any dimension)
+//     Return: the x,y distance from P to S
+"{\n"
+"  vec2 v = P1 - P0;\n"
+"  vec2 w = P - P0;\n"
+"  float c1 = dot(w,v);\n"
+"  if ( c1 <= 0 )\n"
+"    return abs(P-P0);\n"
+"  float c2 = dot(v,v);\n"
+"  if ( c2 <= c1 )\n"
+"    return abs(P-P1);\n"
+"  float b = c1 / c2;\n"
+"  vec2 Pb = P0 + b * v;\n"
+"  return abs(P-Pb);\n"
+"}\n"
 
 "uint pixIsInside (ivec2 Pin, uint idx){\n"
 "  vec2 Quad[5];\n"
@@ -94,7 +96,10 @@ SHADER_VERSION_COMPUTE
 "  P = vec2(Pin);\n"
 
 "  if (wn_PnPoly(P, Quad) != 0u) return 1u;\n"
-//"  if (cn_PnPoly(P, Quad) == 1u) return 1u;\n"
+"  if (all(lessThanEqual(dist(P, Quad[0], Quad[1]), vec2(0.5, 0.5)))) return 1u;\n"
+"  if (all(lessThanEqual(dist(P, Quad[1], Quad[2]), vec2(0.5, 0.5)))) return 1u;\n"
+"  if (all(lessThanEqual(dist(P, Quad[2], Quad[3]), vec2(0.5, 0.5)))) return 1u;\n"
+"  if (all(lessThanEqual(dist(P, Quad[3], Quad[0]), vec2(0.5, 0.5)))) return 1u;\n"
 "  else return 0u;\n"
 "}\n"
 

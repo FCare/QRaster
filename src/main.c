@@ -293,34 +293,34 @@ static void generateScene() {
 
   vdp1_add(cmd);
 
-  angle += 0.01;
-  if (angle >= 360.0) angle -= 360.0;
+  P[0] = WIDTH/6 - WIDTH/6;
+  P[1] = 3*HEIGHT/4 - HEIGHT/2;
+  P[2] = WIDTH/6 - WIDTH/6;
+  P[3] = 3*HEIGHT/4 - HEIGHT/2;
+  P[4] = WIDTH/6 - WIDTH/6;
+  P[5] = HEIGHT/4 - HEIGHT/2;
+  P[6] = WIDTH/6 - WIDTH/6;
+  P[7] = HEIGHT/4 - HEIGHT/2;
 
-  P[0] = WIDTH/6;
-  P[1] = HEIGHT/2;
-  P[2] = WIDTH/6;
-  P[3] = HEIGHT/2;
-  P[4] = WIDTH/6;
-  P[5] = HEIGHT/4;
-  P[6] = WIDTH/6;
-  P[7] = HEIGHT/4;
-#if 0
-  mat[0] = cos(0.0/(2.0*M_PI));
-  mat[1] = -sin(0.0/(2.0*M_PI));
-  mat[2] = sin(0.0/(2.0*M_PI));
-  mat[3] = cos(0.0/(2.0*M_PI));
+  mat[0] = cos(angle/(2.0*M_PI));
+  mat[1] = -sin(angle/(2.0*M_PI));
+  mat[2] = sin(angle/(2.0*M_PI));
+  mat[3] = cos(angle/(2.0*M_PI));
 
-  cmd->P[0] = mat[0]*P[0] + mat[1]*P[1] + WIDTH/2;
+  cmd->P[0] = mat[0]*P[0] + mat[1]*P[1] + WIDTH/6;
   cmd->P[1] = mat[2]*P[0] + mat[3]*P[1] + HEIGHT/2;
-  cmd->P[2] = mat[0]*P[2] + mat[1]*P[3] + WIDTH/2;
+  cmd->P[2] = mat[0]*P[2] + mat[1]*P[3] + WIDTH/6;
   cmd->P[3] = mat[2]*P[2] + mat[3]*P[3] + HEIGHT/2;
-  cmd->P[4] = mat[0]*P[4] + mat[1]*P[5] + WIDTH/2;
+  cmd->P[4] = mat[0]*P[4] + mat[1]*P[5] + WIDTH/6;
   cmd->P[5] = mat[2]*P[4] + mat[3]*P[5] + HEIGHT/2;
-  cmd->P[6] = mat[0]*P[6] + mat[1]*P[7] + WIDTH/2;
+  cmd->P[6] = mat[0]*P[6] + mat[1]*P[7] + WIDTH/6;
   cmd->P[7] = mat[2]*P[6] + mat[3]*P[7] + HEIGHT/2;
-#endif
+
   vdp1_add(cmd);
   free(cmd);
+
+  angle += 0.01;
+  if (angle >= 360.0) angle -= 360.0;
 }
 
 static void updateVDP1() {
