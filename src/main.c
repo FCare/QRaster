@@ -20,6 +20,8 @@
 
 #define RATIO 4.0
 
+#define ANGLE_STEP 0.1 //1 rotation every 3600 images.
+
 #define __USE_OPENGL_DEBUG__
 
 #include <GLFW/glfw3.h>
@@ -321,7 +323,7 @@ static void generateScene() {
   vdp1_add(cmd);
   free(cmd);
 
-  angle += 0.01;
+  angle += ANGLE_STEP;
   if (angle >= 360.0) angle -= 360.0;
 }
 
