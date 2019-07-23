@@ -192,7 +192,6 @@ int vdp1_add(cmdparameter* cmd) {
       }
     }
   }
-	free(cmd);
 }
 
 int vdp1_compute_init(int width, int height)
