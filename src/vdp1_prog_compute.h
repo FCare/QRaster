@@ -31,6 +31,7 @@ SHADER_VERSION_COMPUTE
 "layout(std430, binding = 3) readonly buffer COLOR { uint color[]; };\n"
 "layout(location = 4) uniform int colWidth;\n"
 "layout(location = 5) uniform int colHeight;\n"
+"layout(location = 6) uniform float upscale;\n"
 // from here http://geomalgorithms.com/a03-_inclusion.html
 // a Point is defined by its coordinates {int x, y;}
 //===================================================================
@@ -93,7 +94,7 @@ SHADER_VERSION_COMPUTE
 "  Quad[2] = vec2(cmd[idx].P[4],cmd[idx].P[5]);\n"
 "  Quad[3] = vec2(cmd[idx].P[6],cmd[idx].P[7]);\n"
 "  Quad[4] = Quad[0];\n"
-"  P = vec2(Pin);\n"
+"  P = vec2(Pin)/upscale;\n"
 
 "  if (wn_PnPoly(P, Quad) != 0u) return 1u;\n"
 "  if (all(lessThanEqual(dist(P, Quad[0], Quad[1]), vec2(0.5, 0.5)))) return 1u;\n"
@@ -117,7 +118,7 @@ SHADER_VERSION_COMPUTE
 
 "vec2 getTexCoord(ivec2 texel, uint cmdindex) {\n"
 //http://iquilezles.org/www/articles/ibilinear/ibilinear.htm
-"  vec2 p = vec2(texel);\n"
+"  vec2 p = vec2(texel)/upscale;\n"
 "  vec2 a = vec2(cmd[cmdindex].P[0],cmd[cmdindex].P[1]);\n"
 "  vec2 b = vec2(cmd[cmdindex].P[2],cmd[cmdindex].P[3]);\n"
 "  vec2 c = vec2(cmd[cmdindex].P[4],cmd[cmdindex].P[5]);\n"

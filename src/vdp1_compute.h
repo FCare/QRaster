@@ -12,7 +12,7 @@ typedef struct
   int P[8];
 } cmdparameter;
 
-extern int vdp1_compute_init(int width, int height);
+extern int vdp1_compute_init(int width, int height, float ratio);
 extern int vdp1_compute();
 extern int vdp1_add(cmdparameter* cmd);
 

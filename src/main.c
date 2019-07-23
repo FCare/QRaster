@@ -15,8 +15,10 @@
 #include <GL/glew.h>
 #endif
 
-#define WIDTH 800
-#define HEIGHT 480
+#define WIDTH 320
+#define HEIGHT 240
+
+#define RATIO 4.0
 
 #define __USE_OPENGL_DEBUG__
 
@@ -135,22 +137,22 @@ static void initDrawVDP1() {
   glDisable(GL_BLEND);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_DITHER);
-  glViewport(0, 0, WIDTH, HEIGHT);
+  glViewport(0, 0, WIDTH*RATIO, HEIGHT*RATIO);
   glGenBuffers(1, &vertexPosition_buf);
   glClearColor(1.0, 1.0, 1.0, 1.0);
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
-  vdp1_compute_init(WIDTH, HEIGHT);
+  vdp1_compute_init(WIDTH, HEIGHT, RATIO);
 
 }
 
 static int blitSimple(GLint tex) {
 
   float const vertexPosition[] = {
-  (float)WIDTH/2.0f, -(float)HEIGHT/2.0f,
-  -(float)WIDTH/2.0f, -(float)HEIGHT/2.0f,
-  (float)WIDTH/2.0f, (float)HEIGHT/2.0f,
-  -(float)WIDTH/2.0f, (float)HEIGHT/2.0f };
+  (float)WIDTH*RATIO/2.0f, -(float)HEIGHT*RATIO/2.0f,
+  -(float)WIDTH*RATIO/2.0f, -(float)HEIGHT*RATIO/2.0f,
+  (float)WIDTH*RATIO/2.0f, (float)HEIGHT*RATIO/2.0f,
+  -(float)WIDTH*RATIO/2.0f, (float)HEIGHT*RATIO/2.0f };
 
   const char winprio_v[] =
     SHADER_VERSION
@@ -333,7 +335,7 @@ static void updateVDP1() {
 
 int main(int argc, char *argv[]) {
 
-  setupOpenGL(WIDTH, HEIGHT);
+  setupOpenGL(WIDTH*RATIO, HEIGHT*RATIO);
   initDrawVDP1();
   setKeyCallback();
 

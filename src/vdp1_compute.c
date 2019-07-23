@@ -20,6 +20,7 @@ static int local_size_y = LOCAL_SIZE_Y;
 
 static int tex_width;
 static int tex_height;
+static int tex_ratio;
 static int struct_size;
 
 static int work_groups_x;
@@ -194,23 +195,24 @@ int vdp1_add(cmdparameter* cmd) {
   }
 }
 
-int vdp1_compute_init(int width, int height)
+int vdp1_compute_init(int width, int height, float ratio)
 {
   int am = sizeof(cmdparameter) % 16;
   tex_width = width;
   tex_height = height;
+	tex_ratio = ratio;
   struct_size = sizeof(cmdparameter);
   if (am != 0) {
     struct_size += 16 - am;
   }
 
-  clear = (int*)malloc(tex_height * tex_width * sizeof(int));
-	memset(clear, 0, tex_height * tex_width * sizeof(int));
+  clear = (int*)malloc(tex_height*tex_ratio * tex_width*tex_ratio * sizeof(int));
+	memset(clear, 0, tex_height*tex_ratio * tex_width*tex_ratio * sizeof(int));
 
-  work_groups_x = (tex_width) / local_size_x;
-  work_groups_y = (tex_height) / local_size_y;
+  work_groups_x = (tex_width*tex_ratio) / local_size_x;
+  work_groups_y = (tex_height*tex_ratio) / local_size_y;
 
-  generateComputeBuffer(width, height);
+  generateComputeBuffer(width*ratio, height*ratio);
   nbCmd = (int*)malloc(NB_COARSE_RAST *sizeof(int));
   cmdVdp1 = (cmdparameter*)malloc(NB_COARSE_RAST*2000*sizeof(cmdparameter));
   memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
@@ -225,7 +227,7 @@ int vdp1_compute() {
   glUseProgram(prg_vdp1[progId]);
 
 	glBindTexture(GL_TEXTURE_2D, compute_tex);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex_width, tex_height, GL_BGRA, GL_UNSIGNED_BYTE, clear);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex_width*tex_ratio, tex_height*tex_ratio, GL_BGRA, GL_UNSIGNED_BYTE, clear);
 
 	ErrorHandle("glUseProgram");
 
@@ -246,6 +248,7 @@ int vdp1_compute() {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_vram_);
 	glUniform1i(4, SONIC_WIDTH);
 	glUniform1i(5, SONIC_HEIGHT);
+	glUniform1f(6, tex_ratio);
 
   glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 	// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
