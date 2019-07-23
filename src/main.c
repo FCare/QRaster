@@ -242,14 +242,24 @@ static void generateScene() {
   float mat[4];
   int P[8];
   cmdparameter *cmd = (cmdparameter*)malloc(sizeof(cmdparameter));
-  P[0] = -WIDTH/4;
+  // P[0] = -WIDTH/4;
+  // P[1] = HEIGHT/4;
+  // P[2] = 0;
+  // P[3] = 0;
+  // P[4] = WIDTH/4;
+  // P[5] = HEIGHT/4;
+  // P[6] = 0;
+  // P[7] = -HEIGHT/4;
+
+  P[0] = -WIDTH/5;
   P[1] = HEIGHT/4;
-  P[2] = 0;
-  P[3] = 0;
+  P[2] = WIDTH/5;
+  P[3] = HEIGHT/4;
   P[4] = WIDTH/4;
-  P[5] = HEIGHT/4;
-  P[6] = 0;
+  P[5] = -HEIGHT/5;
+  P[6] = -WIDTH/4;
   P[7] = -HEIGHT/4;
+
 
   mat[0] = cos(angle/(2.0*M_PI));
   mat[1] = -sin(angle/(2.0*M_PI));

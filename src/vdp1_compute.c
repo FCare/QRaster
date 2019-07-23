@@ -237,9 +237,7 @@ int vdp1_compute() {
 
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
   for (int i = 0; i < NB_COARSE_RAST; i++) {
-//  for (int i = 0; i < 1; i++) {
     if (nbCmd[i] != 0)
-		//printf("%d : %d %d %d\n", i, struct_size, struct_size*i, nbCmd[i]);
     	glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i*2000, nbCmd[i]*sizeof(cmdparameter), (void*)&cmdVdp1[2000*i]);
   }
 

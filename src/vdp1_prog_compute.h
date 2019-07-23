@@ -115,8 +115,41 @@ SHADER_VERSION_COMPUTE
 "  return -1;\n"
 "}\n"
 
+"float cross( in vec2 a, in vec2 b ) { return a.x*b.y - a.y*b.x; }\n"
+
 "vec2 getTexCoord(ivec2 texel, uint cmdindex) {\n"
-"  return vec2(float(texel.x)/float(colWidth), float(texel.y)/float(colHeight));\n"
+//http://iquilezles.org/www/articles/ibilinear/ibilinear.htm
+"  vec2 p = vec2(texel);\n"
+"  vec2 a = vec2(cmd[cmdindex].P[0],cmd[cmdindex].P[1]);\n"
+"  vec2 b = vec2(cmd[cmdindex].P[2],cmd[cmdindex].P[3]);\n"
+"  vec2 c = vec2(cmd[cmdindex].P[4],cmd[cmdindex].P[5]);\n"
+"  vec2 d = vec2(cmd[cmdindex].P[6],cmd[cmdindex].P[7]);\n"
+"  vec2 e = b-a;\n"
+"  vec2 f = d-a;\n"
+"  vec2 g = a-b+c-d;\n"
+"  vec2 h = p-a;\n"
+
+"  float k2 = cross( g, f );\n"
+"  float k1 = cross( e, f ) + cross( h, g );\n"
+"  float k0 = cross( h, e );\n"
+
+"  float w = k1*k1 - 4.0*k0*k2;\n"
+"  if( w<0.0 ) return vec2(-1.0);\n"
+"  w = sqrt( w );\n"
+
+"  float v1 = (-k1 - w)/(2.0*k2);\n"
+"  float u1 = (h.x - f.x*v1)/(e.x + g.x*v1);\n"
+
+"  float v2 = (-k1 + w)/(2.0*k2);\n"
+"  float u2 = (h.x - f.x*v2)/(e.x + g.x*v2);\n"
+
+"  float u = u1;\n"
+"  float v = v1;\n"
+
+"  if( v<0.0 || v>1.0 || u<0.0 || u>1.0 ) { u=u2;   v=v2;   }\n"
+"  if( v<0.0 || v>1.0 || u<0.0 || u>1.0 ) { u=-1.0; v=-1.0; }\n"
+
+"  return vec2( u, v );\n"
 "}\n"
 
 "void main()\n"
@@ -139,12 +172,11 @@ static const char vdp1_end_f[] =
 
 static const char vdp1_test_f[] =
 //"    else finalColor = vec4(float(cmd[cmdindex].P[1].x)/800.0, float(cmd[cmdindex].P[1].y)/480.0, 1.0, 1.0);\n"
-"    vec2 texcoord = getTexCoord(texel, cmdindex);"
-"    uint col = color[uint(texcoord.y * colHeight)*  colWidth + uint(texcoord.x * colWidth)];"
+"    vec2 texcoord = getTexCoord(texel, cmdindex);\n"
+"    uint col = color[uint(texcoord.y * colHeight)*  colWidth + uint(texcoord.x * colWidth)];\n"
 "    float a = float((col>>24u)&0xFFu)/255.0f;\n"
 "    float b = float((col>>16u)&0xFFu)/255.0f;\n"
 "    float g = float((col>>8u)&0xFFu)/255.0f;\n"
 "    float r = float((col>>0u)&0xFFu)/255.0f;\n"
 "    finalColor = vec4(r,g,b,a);\n";
-
 #endif //VDP1_PROG_COMPUTE_H
