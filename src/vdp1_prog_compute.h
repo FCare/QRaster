@@ -18,10 +18,6 @@ SHADER_VERSION_COMPUTE
 "precision highp float;\n"
 "#endif\n"
 
-"struct point{\n"
-"  int x;\n"
-"  int y;\n"
-"};\n"
 "struct cmdparameter_struct{ \n"
 "  int P[8];\n"
 "};\n"
@@ -44,7 +40,7 @@ SHADER_VERSION_COMPUTE
 //            =0 for P2  on the line
 //            <0 for P2  right of the line
 //    See: Algorithm 1 "Area of Triangles and Polygons"
-"int isLeft( point P0, point P1, ivec2 P2 ){\n"
+"float isLeft( vec2 P0, vec2 P1, vec2 P2 ){\n"
 //This can be used to detect an exact edge
 "    return ( (P1.x - P0.x) * (P2.y - P0.y) - (P2.x -  P0.x) * (P1.y - P0.y) );\n"
 "}\n"
@@ -52,25 +48,25 @@ SHADER_VERSION_COMPUTE
 //      Input:   P = a point,
 //               V[] = vertex points of a polygon V[n+1] with V[n]=V[0]
 //      Return:  wn = the winding number (=0 only when P is outside)
-"uint wn_PnPoly( ivec2 P, point V[5]){\n"
-"    uint wn = 0;\n"    // the  winding number counter
-     // loop through all edges of the polygon
-"    for (int i=0; i<4; i++) {\n"   // edge from V[i] to  V[i+1]
-"        if (V[i].y <= P.y) {\n"          // start y <= P.y
-"            if (V[i+1].y  > P.y)\n"      // an upward crossing
-"                 if (isLeft( V[i], V[i+1], P) > 0)\n"  // P left of  edge
-"                     ++wn;\n"            // have  a valid up intersect
-"        }\n"
-"        else {\n"                        // start y > P.y (no test needed)
-"            if (V[i+1].y  <= P.y)\n"     // a downward crossing
-"                 if (isLeft( V[i], V[i+1], P) < 0)\n"  // P right of  edge
-"                     --wn;\n"            // have  a valid down intersect
-"        }\n"
+"uint wn_PnPoly( vec2 P, vec2 V[5]){\n"
+"  uint wn = 0;\n"    // the  winding number counter
+   // loop through all edges of the polygon
+"  for (int i=0; i<4; i++) {\n"   // edge from V[i] to  V[i+1]
+"    if (V[i].y <= P.y) {\n"          // start y <= P.y
+"      if (V[i+1].y > P.y) \n"      // an upward crossing
+"        if (isLeft( V[i], V[i+1], P) > 0)\n"  // P left of  edge
+"          ++wn;\n"            // have  a valid up intersect
 "    }\n"
-"    return wn;\n"
+"    else {\n"                        // start y > P.y (no test needed)
+"      if (V[i+1].y <= P.y)\n"     // a downward crossing
+"        if (isLeft( V[i], V[i+1], P) < 0)\n"  // P right of  edge
+"          --wn;\n"            // have  a valid down intersect
+"    }\n"
+"  }\n"
+"  return wn;\n"
 "}\n"
 
-"uint cn_PnPoly( ivec2 P, point V[5]){\n"
+"uint cn_PnPoly( ivec2 P, vec2 V[5]){\n"
 "  uint cn = 0;\n"    // the  crossing number counter
     // loop through all edges of the polygon
 "    for (int i=0; i<4; i++) {\n"    // edge from V[i]  to V[i+1]
@@ -87,18 +83,15 @@ SHADER_VERSION_COMPUTE
 "}\n"
 //===================================================================
 
-"uint pixIsInside (ivec2 P, uint idx){\n"
-"  point Quad[5];\n"
-"  Quad[0].x = cmd[idx].P[0];\n"
-"  Quad[0].y = cmd[idx].P[1];\n"
-"  Quad[1].x = cmd[idx].P[2];\n"
-"  Quad[1].y = cmd[idx].P[3];\n"
-"  Quad[2].x = cmd[idx].P[4];\n"
-"  Quad[2].y = cmd[idx].P[5];\n"
-"  Quad[3].x = cmd[idx].P[6];\n"
-"  Quad[3].y = cmd[idx].P[7];\n"
-"  Quad[4].x = Quad[0].x;\n"
-"  Quad[4].y = Quad[0].y;\n"
+"uint pixIsInside (ivec2 Pin, uint idx){\n"
+"  vec2 Quad[5];\n"
+"  vec2 P;\n"
+"  Quad[0] = vec2(cmd[idx].P[0],cmd[idx].P[1]);\n"
+"  Quad[1] = vec2(cmd[idx].P[2],cmd[idx].P[3]);\n"
+"  Quad[2] = vec2(cmd[idx].P[4],cmd[idx].P[5]);\n"
+"  Quad[3] = vec2(cmd[idx].P[6],cmd[idx].P[7]);\n"
+"  Quad[4] = Quad[0];\n"
+"  P = vec2(Pin);\n"
 
 "  if (wn_PnPoly(P, Quad) != 0u) return 1u;\n"
 //"  if (cn_PnPoly(P, Quad) == 1u) return 1u;\n"
