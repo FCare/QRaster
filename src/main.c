@@ -242,14 +242,31 @@ static void generateScene() {
   float mat[4];
   int P[8];
   cmdparameter *cmd = (cmdparameter*)malloc(sizeof(cmdparameter));
-  // P[0] = -WIDTH/4;
-  // P[1] = HEIGHT/4;
-  // P[2] = 0;
-  // P[3] = 0;
-  // P[4] = WIDTH/4;
-  // P[5] = HEIGHT/4;
-  // P[6] = 0;
-  // P[7] = -HEIGHT/4;
+  P[0] = -WIDTH/4;
+  P[1] = HEIGHT/4;
+  P[2] = WIDTH/4;
+  P[3] = HEIGHT/4;
+  P[4] = -WIDTH/4;
+  P[5] = -HEIGHT/4;
+  P[6] = WIDTH/4;;
+  P[7] = -HEIGHT/4;
+
+  mat[0] = cos(-angle/(2.0*M_PI));
+  mat[1] = -sin(-angle/(2.0*M_PI));
+  mat[2] = sin(-angle/(2.0*M_PI));
+  mat[3] = cos(-angle/(2.0*M_PI));
+
+  cmd->P[0] = mat[0]*P[0] + mat[1]*P[1] + WIDTH/2;
+  cmd->P[1] = mat[2]*P[0] + mat[3]*P[1] + HEIGHT/2;
+  cmd->P[2] = mat[0]*P[2] + mat[1]*P[3] + WIDTH/2;
+  cmd->P[3] = mat[2]*P[2] + mat[3]*P[3] + HEIGHT/2;
+  cmd->P[4] = mat[0]*P[4] + mat[1]*P[5] + WIDTH/2;
+  cmd->P[5] = mat[2]*P[4] + mat[3]*P[5] + HEIGHT/2;
+  cmd->P[6] = mat[0]*P[6] + mat[1]*P[7] + WIDTH/2;
+  cmd->P[7] = mat[2]*P[6] + mat[3]*P[7] + HEIGHT/2;
+
+  vdp1_add(cmd);
+  cmd = (cmdparameter*)malloc(sizeof(cmdparameter));
 
   P[0] = -WIDTH/5;
   P[1] = HEIGHT/4;
