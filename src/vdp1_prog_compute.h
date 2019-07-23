@@ -122,17 +122,17 @@ SHADER_VERSION_COMPUTE
 "  vec2 b = vec2(cmd[cmdindex].P[2],cmd[cmdindex].P[3]);\n"
 "  vec2 c = vec2(cmd[cmdindex].P[4],cmd[cmdindex].P[5]);\n"
 "  vec2 d = vec2(cmd[cmdindex].P[6],cmd[cmdindex].P[7]);\n"
-"  vec2 e = b-a;\n"
-"  vec2 f = d-a;\n"
-"  vec2 g = a-b+c-d;\n"
-"  vec2 h = p-a;\n"
+"  vec2 e = b-a+vec2(1.0);\n"
+"  vec2 f = d-a+vec2(1.0);\n"
+"  vec2 g = a-b+c-d+vec2(2.0);\n"
+"  vec2 h = p-a+vec2(1.0);\n"
 
 "  float k2 = cross( g, f );\n"
 "  float k1 = cross( e, f ) + cross( h, g );\n"
 "  float k0 = cross( h, e );\n"
 
 "  float w = k1*k1 - 4.0*k0*k2;\n"
-"  if( w<0.0 ) return vec2(-1.0);\n"
+"  if( w<0.0 ) return vec2(0.5);\n"
 "  w = sqrt( w );\n"
 
 "  float v1 = (-k1 - w)/(2.0*k2);\n"
