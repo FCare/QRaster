@@ -248,6 +248,7 @@ int vdp1_compute() {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_cmd_);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_vram_);
 	glUniform1i(4, SONIC_WIDTH);
+	glUniform1i(5, SONIC_HEIGHT);
 
   glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 	// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);

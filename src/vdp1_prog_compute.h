@@ -34,6 +34,7 @@ SHADER_VERSION_COMPUTE
 "};\n"
 "layout(std430, binding = 3) readonly buffer COLOR { uint color[]; };\n"
 "layout(location = 4) uniform int colWidth;\n"
+"layout(location = 5) uniform int colHeight;\n"
 // from here http://geomalgorithms.com/a03-_inclusion.html
 // a Point is defined by its coordinates {int x, y;}
 //===================================================================
@@ -114,6 +115,10 @@ SHADER_VERSION_COMPUTE
 "  return -1;\n"
 "}\n"
 
+"vec2 getTexCoord(ivec2 texel, uint cmdindex) {\n"
+"  return vec2(float(texel.x)/float(colWidth), float(texel.y)/float(colHeight));\n"
+"}\n"
+
 "void main()\n"
 "{\n"
 "  uint discarded = 0;\n"
@@ -134,7 +139,8 @@ static const char vdp1_end_f[] =
 
 static const char vdp1_test_f[] =
 //"    else finalColor = vec4(float(cmd[cmdindex].P[1].x)/800.0, float(cmd[cmdindex].P[1].y)/480.0, 1.0, 1.0);\n"
-"    uint col = color[(texel.y * colWidth) + texel.x];"
+"    vec2 texcoord = getTexCoord(texel, cmdindex);"
+"    uint col = color[uint(texcoord.y * colHeight)*  colWidth + uint(texcoord.x * colWidth)];"
 "    float a = float((col>>24u)&0xFFu)/255.0f;\n"
 "    float b = float((col>>16u)&0xFFu)/255.0f;\n"
 "    float g = float((col>>8u)&0xFFu)/255.0f;\n"

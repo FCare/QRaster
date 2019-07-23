@@ -46,6 +46,8 @@ set(QRASTER_HEADERS ${QRASTER_HEADERS}
   src/sonic.h
 )
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-trigraphs -O3")
+
 set(QRASTER_LIBRARIES ${QRASTER_LIBRARIES} m)
 
 add_executable(QRaster ${QRASTER_SOURCES} ${QRASTER_HEADERS} )
